@@ -4,6 +4,8 @@ ls_extensions = ["py", "ipynb", "md", "csv", "png"]
 from .my_ui import MyUI
 from .my_file_list import MyFileList
 from .my_data_frame import MyDataFrame
+from .power_in_file_search import PowerInFileSearch
+
 mu = MyUI
 my_input = lambda x,y: mu.input(x,y)
 
@@ -51,7 +53,14 @@ class MySearch:
         mfl.idx = idx
         print(f"display: {mfl.file_path}")
         mfl.show_md_file(idx)
+"""
+    def search(self, keywords, mode="or", file_list = None, case_sensitive=False):
         
+        if file_list:
+            pass
+        elif 
+        ifs = PowerInFileSearch(file_list, case_sensitive)
+"""        
 
 
     

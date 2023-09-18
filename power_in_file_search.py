@@ -60,7 +60,8 @@ class PowerInFileSearch:
             futures = {executor.submit(self._search_file, file_path, keywords, mode): file_path for file_path in self.file_list}
             for future in concurrent.futures.as_completed(futures):
                 results.extend(future.result())
-
-        df = pd.DataFrame(results, columns=["file_name", "line_number", "line_content", "around_context"])
+                
+        
+        df = pd.DataFrame(results, columns=["file_path", "line_number", "line_content", "around_context"])
         return df
 

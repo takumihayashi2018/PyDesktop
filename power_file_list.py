@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import re
 from concurrent.futures import ThreadPoolExecutor
 from IPython.display import display, Markdown
+import time  # 実行時間計測のため
 
 pd.options.display.colheader_justify = 'left'
 
@@ -15,8 +16,7 @@ ls_extensions = ['ipynb', 'py', 'md']
 class PowerFileList:
     def __init__(self, base_dir='.'):
         self.df_file_list = pd.DataFrame()
-        # base_dirを絶対パスに変換
-        self._base_dir = os.path.abspath(base_dir)
+        self._base_dir = base_dir
         self.idx = 0
 
     @property
@@ -30,12 +30,21 @@ class PowerFileList:
     @property
     def update_flg_time(self):
         return re.sub(r'\.\d+', '', str(datetime.now() - timedelta(days=self.ndays)))
-
+    
     def _process_directory(self, base_depth, directory_data):
         dirpath, dirnames, filenames = directory_data
         file_data = []
-        
-        dirnames[:] = [d for d in dirnames if d not in self.dir_out_scope and not d.startswith(".")]
+    
+        # dirs_outscopeのディレクトリやその子孫をスキップ
+        if any(os.path.join(self._base_dir, dir_out) in dirpath for dir_out in self.dir_out_scope):
+            dirnames[:] = []  # このディレクトリ以下の走査をスキップ
+            return []
+    
+        # .で始まる隠しディレクトリをスキップ
+        dirnames[:] = [d for d in dirnames if not d.startswith(".")]
+
+        if any(dir_out in dirpath for dir_out in self.dir_out_scope):
+            return []
 
         for filename in filenames:
             file_ext = os.path.splitext(filename)[1][1:]
@@ -59,6 +68,8 @@ class PowerFileList:
         return file_data
 
     def get_df_file_list(self, base_dir='', extensions=ls_extensions, ndays=ndays, dir_out_scope=dirs_outscope):
+        start_time = time.time()  # 実行時間計測の開始
+
         self.extensions = extensions
         self.dir_out_scope = dir_out_scope
         self.ndays = ndays
@@ -80,8 +91,7 @@ class PowerFileList:
 
         cols = ['file_name', 'dir_path', 'dir_name', 'extension', 'last_update', 'flg_updated', 'depth']
         df = pd.DataFrame(all_file_data, columns=cols)
-        # 絶対パスから相対パスに変換してリンクを作成
-        df['link'] = df.apply(lambda x: f'<a href="{os.path.relpath(os.path.join(x.dir_path, x.file_name), os.getcwd())}">link</a>', axis=1)
+        df['link'] = df.apply(lambda x: f'<a href="{x.dir_path}/{x.file_name}">link</a>', axis=1)
         cols = ["link"] + cols
         df['tmp_file_name'] = df.file_name.str.lower()
         df['tmp_dir_path'] = df.dir_path.str.lower()
@@ -90,6 +100,8 @@ class PowerFileList:
         self.df_file_list = self.df_show = df[cols]
         self.updated_time = re.sub(r'\.\d+', '', str(datetime.now()))
 
+        end_time = time.time()  # 実行時間計測の終了
+        print(f"Execution Time: {end_time - start_time:.2f} seconds")
 
     @property
     def df_updated_only(self):

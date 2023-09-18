@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import re
 from IPython.display import display, HTML, Markdown
+import time  # 実行時間計測のため
 pd.options.display.colheader_justify = 'left'
 
 ndays=5
@@ -28,6 +29,9 @@ class MyFileList:
         return re.sub(r'\.\d+', '', str(datetime.now() - timedelta(days=self.ndays)))
     
     def get_df_file_list(self, base_dir='', extensions=ls_extensions, ndays=ndays, dir_out_scope=dirs_outscope):
+
+        start_time = time.time()  # 実行時間計測の開始
+        
         self.ndays = ndays
         if base_dir != '':
             self.base_dir = base_dir
@@ -72,6 +76,8 @@ class MyFileList:
                 columns=['tmp_dir_path', 'tmp_file_name']).reset_index(drop=True)
         self.df_file_list = self.df_show = df[cols]
         self.updated_time = re.sub(r'\.\d+', '', str(datetime.now()))
+        end_time = time.time()  # 実行時間計測の終了
+        print(f"Execution Time: {end_time - start_time:.2f} seconds")
     
     @property
     def df_updated_only(self):
